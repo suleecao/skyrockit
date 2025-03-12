@@ -6,8 +6,10 @@ const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const morgan = require('morgan');
 const session = require('express-session');
-
 const authController = require('./controllers/auth.js');
+//add the middleware we wrote here
+const isSignedIn = require('./middleware/is-signed-in.js');
+const passUserToView = require('./middleware/pass-user-to-view.js');
 
 const port = process.env.PORT ? process.env.PORT : '3000';
 
@@ -28,6 +30,10 @@ app.use(
   })
 );
 
+//do not put the new custom middleware above the session middleware
+
+app.use(passUserToView);
+
 app.get('/', (req, res) => {
   res.render('index.ejs', {
     user: req.session.user,
@@ -35,6 +41,10 @@ app.get('/', (req, res) => {
 });
 
 app.use('/auth', authController);
+
+//this is signed in middleware goes after we run the auth routes
+//you have to authenticate first
+app.use(isSignedIn);
 
 app.listen(port, () => {
   console.log(`The express app is ready on port ${port}!`);
